@@ -7,39 +7,105 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f4f8;
       text-align: center;
-      padding-top: 100px;
+      padding-top: 50px;
     }
-    button {
+
+    h1 {
+      margin-bottom: 40px;
+    }
+
+    .status-container {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+
+    .status-box {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      padding: 20px;
+      width: 250px;
+      transition: all 0.3s ease;
+    }
+
+    .status-box h2 {
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+
+    .status-img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      margin-top: 10px;
+    }
+
+    .status-text {
       font-size: 20px;
-      padding: 10px 30px;
-      margin: 5px;
-      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
     }
+
+    .status-on { color: green; }
+    .status-off { color: red; }
+    .status-mode-on { color: blue; }
+    .status-mode-off { color: orange; }
+
+    .buttons {
+      margin-top: 30px;
+    }
+
+    .buttons button {
+      font-size: 18px;
+      padding: 10px 25px;
+      margin: 5px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
     .on { background-color: green; color: white; }
     .off { background-color: red; color: white; }
     .mode-on { background-color: blue; color: white; }
     .mode-off { background-color: orange; color: white; }
-    #status {
-      font-size: 28px;
-      margin-bottom: 30px;
-    }
-    .status-img {
-      max-width: 150px;
-      margin-top: 15px;
-    }
+
+    .on:hover { background-color: darkgreen; }
+    .off:hover { background-color: darkred; }
+    .mode-on:hover { background-color: darkblue; }
+    .mode-off:hover { background-color: darkorange; }
+
   </style>
 </head>
 <body>
 
   <h1>ควบคุมและแสดงสถานะอุปกรณ์</h1>
-  <div id="status">กำลังโหลด...</div>
 
-  <button class="on" onclick="setStatus(1)">เปิด</button>
-  <button class="off" onclick="setStatus(0)">ปิด</button>
-  <button class="mode-on" onclick="setStatus(2)">เปิดโหมด</button>
-  <button class="mode-off" onclick="setStatus(3)">ปิดโหมด</button>
+  <div class="status-container">
+    <div class="status-box" id="main-status-box">
+      <h2>สถานะอุปกรณ์</h2>
+      <div id="main-status-text" class="status-text status-off">กำลังโหลด...</div>
+      <img id="main-status-img" class="status-img" src="" alt="สถานะหลัก">
+    </div>
+    <div class="status-box" id="mode-status-box">
+      <h2>สถานะโหมด</h2>
+      <div id="mode-status-text" class="status-text status-mode-off">กำลังโหลด...</div>
+      <img id="mode-status-img" class="status-img" src="" alt="สถานะโหมด">
+    </div>
+  </div>
+
+  <div class="buttons">
+    <button class="on" onclick="setStatus(1)">เปิด</button>
+    <button class="off" onclick="setStatus(0)">ปิด</button>
+    <button class="mode-on" onclick="setStatus(2)">เปิดโหมด</button>
+    <button class="mode-off" onclick="setStatus(3)">ปิดโหมด</button>
+  </div>
 
   <script>
     const firebaseConfig = {
@@ -55,46 +121,69 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    const statusDiv = document.getElementById("status");
+    const mainText = document.getElementById("main-status-text");
+    const mainImg = document.getElementById("main-status-img");
+    const modeText = document.getElementById("mode-status-text");
+    const modeImg = document.getElementById("mode-status-img");
 
-    const statusText = {
-      0: "สถานะ: ปิด",
-      1: "สถานะ: เปิด",
-      2: "สถานะ: เปิดโหมด",
-      3: "สถานะ: ปิดโหมด"
-    };
-
-    const statusImages = {
-      0: "https://cdn-icons-png.flaticon.com/512/1828/1828665.png", // รูปปิด
-      1: "https://cdn-icons-png.flaticon.com/512/1828/1828925.png", // รูปเปิด
-      2: "https://i.pinimg.com/736x/a4/84/28/a4842830b6899a654ad911072c253dc1.jpg", // เปิดโหมด
-      3: "https://cdn-icons-png.flaticon.com/512/3524/3524662.png"  // ปิดโหมด
+    const statusInfo = {
+      0: {
+        mainText: "ปิด",
+        mainClass: "status-off",
+        mainImg: "https://cdn-icons-png.flaticon.com/512/1828/1828665.png",
+        modeText: "ปิดโหมด",
+        modeClass: "status-mode-off",
+        modeImg: "https://cdn-icons-png.flaticon.com/512/3524/3524662.png"
+      },
+      1: {
+        mainText: "เปิด",
+        mainClass: "status-on",
+        mainImg: "https://cdn-icons-png.flaticon.com/512/1828/1828925.png",
+        modeText: "ปิดโหมด",
+        modeClass: "status-mode-off",
+        modeImg: "https://cdn-icons-png.flaticon.com/512/3524/3524662.png"
+      },
+      2: {
+        mainText: "เปิด",
+        mainClass: "status-on",
+        mainImg: "https://cdn-icons-png.flaticon.com/512/1828/1828925.png",
+        modeText: "เปิดโหมด",
+        modeClass: "status-mode-on",
+        modeImg: "https://i.pinimg.com/736x/ae/70/70/ae7070ab7e4b5b5f04f3d986efb563cf.jpg"
+      },
+      3: {
+        mainText: "ปิด",
+        mainClass: "status-off",
+        mainImg: "https://cdn-icons-png.flaticon.com/512/1828/1828665.png",
+        modeText: "ปิดโหมด",
+        modeClass: "status-mode-off",
+        modeImg: "https://cdn-icons-png.flaticon.com/512/3524/3524662.png"
+      }
     };
 
     db.collection("devices").doc("device1")
       .onSnapshot((doc) => {
         if (doc.exists) {
           const status = doc.data().status;
-          const text = statusText[status] || "ไม่ทราบสถานะ";
-          const imgSrc = statusImages[status] || "";
+          const s = statusInfo[status] || statusInfo[0];
 
-          statusDiv.innerHTML = `
-            ${text}
-            <br><img src="${imgSrc}" class="status-img">
-          `;
+          mainText.textContent = s.mainText;
+          mainText.className = "status-text " + s.mainClass;
+          mainImg.src = s.mainImg;
+
+          modeText.textContent = s.modeText;
+          modeText.className = "status-text " + s.modeClass;
+          modeImg.src = s.modeImg;
         } else {
-          statusDiv.textContent = "ไม่มีข้อมูล";
+          mainText.textContent = "ไม่มีข้อมูล";
+          modeText.textContent = "ไม่มีข้อมูล";
         }
       });
 
     function setStatus(value) {
-      db.collection("devices").doc("device1").set({
-        status: value
-      }).then(() => {
-        console.log("เปลี่ยนสถานะสำเร็จ:", value);
-      }).catch((error) => {
-        console.error("เกิดข้อผิดพลาด: ", error);
-      });
+      db.collection("devices").doc("device1").set({ status: value })
+        .then(() => console.log("สถานะอัปเดต:", value))
+        .catch((error) => console.error("เกิดข้อผิดพลาด:", error));
     }
   </script>
 
