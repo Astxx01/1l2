@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>ควบคุมและแสดงสถานะอุปกรณ์</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 100px;
+    }
+    button {
+      font-size: 24px;
+      padding: 15px 40px;
+      margin: 10px;
+      cursor: pointer;
+    }
+    .on {
+      background-color: green;
+      color: white;
+    }
+    .off {
+      background-color: red;
+      color: white;
+    }
+    #status {
+      font-size: 30px;
+      margin-bottom: 30px;
+    }
+    .status-on { color: green; }
+    .status-off { color: red; }
+  </style>
+</head>
+<body>
+
+  <h1>ควบคุมและแสดงสถานะอุปกรณ์</h1>
+  <div id="status" class="status-off">กำลังโหลด...</div>
+  <button class="on" onclick="setStatus(1)">เปิด</button>
+  <button class="off" onclick="setStatus(0)">ปิด</button>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAe9X9jkqECZ4KX2W1S3LIusxfd3kX3eWI",
+      authDomain: "l123-8d4f4.firebaseapp.com",
+      projectId: "l123-8d4f4",
+      storageBucket: "l123-8d4f4.appspot.com",
+      messagingSenderId: "338261852462",
+      appId: "1:338261852462:web:ed7cf644e8fa8171953abf",
+      measurementId: "G-57C629Z4EK"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const statusDiv = document.getElementById("status");
+
+    // อ่านสถานะจาก Firestore แบบเรียลไทม์
+    db.collection("devices").doc("device1")
+      .onSnapshot((doc) => {
+        if (doc.exists) {
+          const status = doc.data().status;
+          if (status === 1) {
+            statusDiv.textContent = "สถานะ: เปิด";
+            statusDiv.className = "status-on";
+          } else {
+            statusDiv.textContent = "สถานะ: ปิด";
+            statusDiv.className = "status-off";
+          }
+        } else {
+          statusDiv.textContent = "ไม่มีข้อมูล";
+          statusDiv.className = "status-off";
+        }
+      });
+
+    // เปลี่ยนสถานะใน Firestore
+    function setStatus(value) {
+      db.collection("devices").doc("device1").set({
+        status: value
+      }).then(() => {
+        console.log("เปลี่ยนสถานะสำเร็จ:", value);
+      }).catch((error) => {
+        console.error("เกิดข้อผิดพลาด: ", error);
+      });
+    }
+  </script>
+
+</body>
+</html>
