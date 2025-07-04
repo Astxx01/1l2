@@ -12,33 +12,34 @@
       padding-top: 100px;
     }
     button {
-      font-size: 24px;
-      padding: 15px 40px;
-      margin: 10px;
+      font-size: 20px;
+      padding: 10px 30px;
+      margin: 5px;
       cursor: pointer;
     }
-    .on {
-      background-color: green;
-      color: white;
-    }
-    .off {
-      background-color: red;
-      color: white;
-    }
+    .on { background-color: green; color: white; }
+    .off { background-color: red; color: white; }
+    .mode-on { background-color: blue; color: white; }
+    .mode-off { background-color: orange; color: white; }
     #status {
-      font-size: 30px;
+      font-size: 28px;
       margin-bottom: 30px;
     }
-    .status-on { color: green; }
-    .status-off { color: red; }
+    .status-img {
+      max-width: 150px;
+      margin-top: 15px;
+    }
   </style>
 </head>
 <body>
 
   <h1>ควบคุมและแสดงสถานะอุปกรณ์</h1>
-  <div id="status" class="status-off">กำลังโหลด...</div>
+  <div id="status">กำลังโหลด...</div>
+
   <button class="on" onclick="setStatus(1)">เปิด</button>
   <button class="off" onclick="setStatus(0)">ปิด</button>
+  <button class="mode-on" onclick="setStatus(2)">เปิดโหมด</button>
+  <button class="mode-off" onclick="setStatus(3)">ปิดโหมด</button>
 
   <script>
     const firebaseConfig = {
@@ -56,25 +57,36 @@
 
     const statusDiv = document.getElementById("status");
 
-    // อ่านสถานะจาก Firestore แบบเรียลไทม์
+    const statusText = {
+      0: "สถานะ: ปิด",
+      1: "สถานะ: เปิด",
+      2: "สถานะ: เปิดโหมด",
+      3: "สถานะ: ปิดโหมด"
+    };
+
+    const statusImages = {
+      0: "https://cdn-icons-png.flaticon.com/512/1828/1828665.png", // รูปปิด
+      1: "https://cdn-icons-png.flaticon.com/512/1828/1828925.png", // รูปเปิด
+      2: "https://i.pinimg.com/736x/a4/84/28/a4842830b6899a654ad911072c253dc1.jpg", // เปิดโหมด
+      3: "https://cdn-icons-png.flaticon.com/512/3524/3524662.png"  // ปิดโหมด
+    };
+
     db.collection("devices").doc("device1")
       .onSnapshot((doc) => {
         if (doc.exists) {
           const status = doc.data().status;
-          if (status === 1) {
-            statusDiv.textContent = "สถานะ: เปิด";
-            statusDiv.className = "status-on";
-          } else {
-            statusDiv.textContent = "สถานะ: ปิด";
-            statusDiv.className = "status-off";
-          }
+          const text = statusText[status] || "ไม่ทราบสถานะ";
+          const imgSrc = statusImages[status] || "";
+
+          statusDiv.innerHTML = `
+            ${text}
+            <br><img src="${imgSrc}" class="status-img">
+          `;
         } else {
           statusDiv.textContent = "ไม่มีข้อมูล";
-          statusDiv.className = "status-off";
         }
       });
 
-    // เปลี่ยนสถานะใน Firestore
     function setStatus(value) {
       db.collection("devices").doc("device1").set({
         status: value
